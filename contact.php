@@ -113,6 +113,8 @@
 </head>
 <body>
 
+<?php include 'navbar.php'; ?>
+
 <h1>Contactez-nous</h1>
 
 <div class="contact-container">

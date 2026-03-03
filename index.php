@@ -7,6 +7,8 @@
 </head>
 <body>
 
+<?php include 'navbar.php'; ?>
+
 <div class="presentation-container">
     <!-- TEXTE -->
     <div class="texte">
@@ -34,14 +36,9 @@
         <a href="contact.php">Contact</a>
         <a href="avis.php">Avis Clients</a>
     </div>
-
-    <!-- PHOTO -->
     <div class="photo">
         <img src="images/photographe.jpg" alt="Photographe">
     </div>
-</div>
-<div style="text-align:center; margin-top:40px; font-size:12px; color:gray;">
-    <a href="admin.php" style="color:gray; text-decoration:none;">Admin</a>
 </div>
 
 </body>

@@ -4,29 +4,36 @@ include("connexion.php");
 
 // Vérifier si le formulaire est soumis
 if(isset($_POST['reserver'])){
-    $nom = $_POST['nom'];
-    $email = $_POST['email'];
-    $telephone = $_POST['telephone'];
-    $pack = $_POST['pack'];
-    $date = $_POST['date'];
+    $nom = htmlspecialchars(trim($_POST['nom']));
+    $email = filter_var(trim($_POST['email']), FILTER_VALIDATE_EMAIL);
+    $telephone = htmlspecialchars(trim($_POST['telephone']));
+    $pack = htmlspecialchars(trim($_POST['pack']));
+    $date = htmlspecialchars(trim($_POST['date']));
 
-    // Requête pour insérer les données dans la table reservations
-    $sql = "INSERT INTO reservations (nom, email, telephone, pack, date_reservation, statut)
-            VALUES ('$nom','$email','$telephone','$pack','$date','confirmé')";
-
-    if($conn->query($sql) === TRUE){
-        echo "<p style='color:green;'>Réservation réussie !</p>";
-
-        // Envoi email au photographe
-        $to = "sixteenprod2001@gmail.com"; // mail du photographe
-        $subject = "Nouvelle réservation";
-        $message = "Nom: $nom\nEmail: $email\nTéléphone: $telephone\nPack: $pack\nDate: $date";
-        $headers = "From: sixteenprod2001@gmail.com";
-
-        // Décommenter la ligne ci-dessous si le serveur est configuré pour envoyer des mails
-        // mail($to, $subject, $message, $headers);
+    if (!$email) {
+        $erreur = "Adresse email invalide.";
+    } elseif (empty($nom) || empty($telephone) || empty($pack) || empty($date)) {
+        $erreur = "Tous les champs sont obligatoires.";
     } else {
-        echo "<p style='color:red;'>Erreur : " . $conn->error . "</p>";
+        // Requête sécurisée avec prepared statement
+        $stmt = $conn->prepare("INSERT INTO reservations (nom, email, telephone, pack, date_reservation, statut) VALUES (?, ?, ?, ?, ?, 'confirmé')");
+        $stmt->bind_param("sssss", $nom, $email, $telephone, $pack, $date);
+
+        if($stmt->execute()){
+            $succes = "Réservation réussie !";
+
+            // Envoi email au photographe
+            $to = "sixteenprod2001@gmail.com";
+            $subject = "Nouvelle réservation";
+            $message = "Nom: $nom\nEmail: $email\nTéléphone: $telephone\nPack: $pack\nDate: $date";
+            $headers = "From: sixteenprod2001@gmail.com";
+
+            // Décommenter la ligne ci-dessous si le serveur est configuré pour envoyer des mails
+            // mail($to, $subject, $body, $headers);
+        } else {
+            $erreur = "Erreur lors de la réservation.";
+        }
+        $stmt->close();
     }
 }
 ?>
@@ -40,7 +47,16 @@ if(isset($_POST['reserver'])){
 </head>
 <body>
 
+<?php include 'navbar.php'; ?>
+
 <h2>Réserver un rendez-vous</h2>
+
+<?php if(isset($succes)): ?>
+    <p style='color:green;'><?php echo htmlspecialchars($succes); ?></p>
+<?php endif; ?>
+<?php if(isset($erreur)): ?>
+    <p style='color:red;'><?php echo htmlspecialchars($erreur); ?></p>
+<?php endif; ?>
 
 <form method="POST">
     <input type="text" name="nom" placeholder="Votre nom" required><br>

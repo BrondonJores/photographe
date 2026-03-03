@@ -33,6 +33,8 @@ if(isset($_POST['envoyer'])) {
 </head>
 <body>
 
+<?php include 'navbar.php'; ?>
+
 <div class="container">
 
 <h2>Laisser un avis</h2>
@@ -58,9 +60,9 @@ $result = $conn->query("SELECT * FROM avis ORDER BY id DESC");
 
 while($row = $result->fetch_assoc()) {
     echo "<div class='avis'>";
-    echo "<strong>".$row['nom']."</strong><br>";
-    echo "<div class='stars'>".str_repeat("⭐", $row['note'])."</div>";
-    echo "<p>".$row['message']."</p>";
+    echo "<strong>".htmlspecialchars($row['nom'])."</strong><br>";
+    echo "<div class='stars'>".str_repeat("⭐", (int)$row['note'])."</div>";
+    echo "<p>".htmlspecialchars($row['message'])."</p>";
     echo "</div>";
 }
 ?>

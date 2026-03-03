@@ -20,11 +20,11 @@ $result = $conn->query("SELECT * FROM tarifs ORDER BY id DESC");
         tr:hover{background:rgba(255,255,255,0.1);}
         td{font-size:15px;}
         @media screen and (max-width:768px){th, td{padding:10px; font-size:14px;}}
-        .admin-btn{text-align:right; margin:20px 5%;}
-        .admin-btn button{background:#ccc; color:#333; border:none; padding:5px 10px; font-size:12px; cursor:pointer;}
     </style>
 </head>
 <body>
+
+<?php include 'navbar.php'; ?>
 
 <h1>Nos Tarifs</h1>
 
@@ -54,21 +54,6 @@ $result = $conn->query("SELECT * FROM tarifs ORDER BY id DESC");
         </tbody>
     </table>
 </div>
-
-<div class="admin-btn">
-    <button onclick="ouvrirAdmin()">Admin Tarifs</button>
-</div>
-
-<script>
-function ouvrirAdmin() {
-    var mdp = prompt("Entrez le mot de passe pour accéder à l'administration :");
-    if(mdp === "Ndiougahmad16") {
-        window.location.href = "admin_tarifs.php";
-    } else {
-        alert("Mot de passe incorrect");
-    }
-}
-</script>
 
 </body>
 </html>
