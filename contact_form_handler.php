@@ -1,10 +1,26 @@
 <?php
 
-// Récupérer les données du formulaire
-$nom = htmlspecialchars($_POST['nom']);
-$email = htmlspecialchars($_POST['email']);
-$sujet = htmlspecialchars($_POST['sujet']);
-$message_form = htmlspecialchars($_POST['message']);
+// Validate required POST fields
+if (
+    empty($_POST['nom']) ||
+    empty($_POST['email']) ||
+    empty($_POST['sujet']) ||
+    empty($_POST['message'])
+) {
+    header("Location: contact.php?success=0");
+    exit();
+}
+
+// Récupérer et valider les données du formulaire
+$nom = htmlspecialchars(trim($_POST['nom']));
+$email = filter_var(trim($_POST['email']), FILTER_VALIDATE_EMAIL);
+$sujet = htmlspecialchars(trim($_POST['sujet']));
+$message_form = htmlspecialchars(trim($_POST['message']));
+
+if (!$email) {
+    header("Location: contact.php?success=0");
+    exit();
+}
 
 // Mail du photographe (celui qui reçoit)
 $to = "sixteenprod2001@gmail.com";
