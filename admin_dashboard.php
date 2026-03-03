@@ -36,6 +36,28 @@ function validateCsrf(): void {
 
 $msg = '';
 
+// --- Supprimer message ---
+if (isset($_GET['del_msg'])) {
+    $id = intval($_GET['del_msg']);
+    $stmt = $conn->prepare("DELETE FROM messages WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->close();
+    header("Location: admin_dashboard.php?tab=messages&ok=1");
+    exit();
+}
+
+// --- Marquer message comme lu ---
+if (isset($_GET['mark_read'])) {
+    $id = intval($_GET['mark_read']);
+    $stmt = $conn->prepare("UPDATE messages SET lu=1 WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->close();
+    header("Location: admin_dashboard.php?tab=messages&ok=1");
+    exit();
+}
+
 // --- Supprimer réservation ---
 if (isset($_GET['del_resa'])) {
     $id = intval($_GET['del_resa']);
@@ -138,6 +160,8 @@ $nb_resa    = $conn->query("SELECT COUNT(*) AS c FROM reservations")->fetch_asso
 $nb_avis    = $conn->query("SELECT COUNT(*) AS c FROM avis")->fetch_assoc()['c'];
 $nb_tarifs  = $conn->query("SELECT COUNT(*) AS c FROM tarifs")->fetch_assoc()['c'];
 $nb_galerie = $conn->query("SELECT COUNT(*) AS c FROM galerie")->fetch_assoc()['c'];
+$nb_messages = $conn->query("SELECT COUNT(*) AS c FROM messages")->fetch_assoc()['c'];
+$nb_messages_unread = $conn->query("SELECT COUNT(*) AS c FROM messages WHERE lu=0")->fetch_assoc()['c'];
 
 // Chart data: reservations by pack
 $chart_data = [];
@@ -155,6 +179,7 @@ $reservations = $conn->query("SELECT * FROM reservations ORDER BY id DESC");
 $avis_list    = $conn->query("SELECT * FROM avis ORDER BY id DESC");
 $tarifs_list  = $conn->query("SELECT * FROM tarifs ORDER BY id DESC");
 $galerie_list = $conn->query("SELECT * FROM galerie ORDER BY id DESC");
+$messages_list = $conn->query("SELECT * FROM messages ORDER BY date_envoi DESC");
 
 $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
 ?>
@@ -228,6 +253,14 @@ $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
           <a class="nav-link <?php echo $active_tab === 'galerie'      ? 'active' : ''; ?>"
              href="?tab=galerie"><i class="fas fa-images me-2"></i>Galerie</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $active_tab === 'messages'     ? 'active' : ''; ?>"
+             href="?tab=messages"><i class="fas fa-inbox me-2"></i>Messages
+            <?php if ($nb_messages_unread > 0): ?>
+              <span class="badge bg-danger ms-1"><?php echo (int)$nb_messages_unread; ?></span>
+            <?php endif; ?>
+          </a>
+        </li>
       </ul>
     </nav>
 
@@ -241,6 +274,7 @@ $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
         <li class="nav-item"><a class="nav-link <?php echo $active_tab==='avis'?'active':''; ?>" href="?tab=avis"><i class="fas fa-star"></i></a></li>
         <li class="nav-item"><a class="nav-link <?php echo $active_tab==='tarifs'?'active':''; ?>" href="?tab=tarifs"><i class="fas fa-tags"></i></a></li>
         <li class="nav-item"><a class="nav-link <?php echo $active_tab==='galerie'?'active':''; ?>" href="?tab=galerie"><i class="fas fa-images"></i></a></li>
+        <li class="nav-item"><a class="nav-link <?php echo $active_tab==='messages'?'active':''; ?>" href="?tab=messages"><i class="fas fa-inbox"></i><?php if ($nb_messages_unread > 0): ?><span class="badge bg-danger"><?php echo (int)$nb_messages_unread; ?></span><?php endif; ?></a></li>
       </ul>
 
       <?php if (isset($_GET['ok'])): ?>
@@ -283,6 +317,13 @@ $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
             <div>Photos galerie</div>
           </div>
         </div>
+        <div class="col-6 col-xl-3">
+          <div class="card stat-card text-white h-100 p-3" style="background:linear-gradient(135deg,#c0392b,#e74c3c);">
+            <div class="icon mb-2"><i class="fas fa-inbox"></i></div>
+            <div class="stat-value"><?php echo $nb_messages; ?></div>
+            <div>Messages <small class="opacity-75">(<?php echo (int)$nb_messages_unread; ?> non lus)</small></div>
+          </div>
+        </div>
       </div>
 
       <!-- Chart -->
@@ -312,6 +353,10 @@ $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
               <li class="list-group-item d-flex justify-content-between">
                 <span><i class="fas fa-images me-2" style="color:#2980b9;"></i>Photos galerie</span>
                 <span class="badge rounded-pill bg-info"><?php echo $nb_galerie; ?></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span><i class="fas fa-inbox me-2" style="color:#c0392b;"></i>Messages reçus</span>
+                <span class="badge rounded-pill bg-danger"><?php echo $nb_messages; ?></span>
               </li>
             </ul>
           </div>
@@ -565,6 +610,119 @@ $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
       </div>
       <?php endif; /* end galerie */ ?>
 
+      <!-- ===================== MESSAGES ===================== -->
+      <?php if ($active_tab === 'messages'): ?>
+      <h4 class="fw-bold mb-4" style="color:var(--brand);">
+        <i class="fas fa-inbox me-2"></i>Messages reçus
+        <?php if ($nb_messages_unread > 0): ?>
+          <span class="badge bg-danger ms-2" style="font-size:.7rem;"><?php echo (int)$nb_messages_unread; ?> non lu(s)</span>
+        <?php endif; ?>
+      </h4>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th><i class="fas fa-user me-1"></i>Nom</th>
+                  <th><i class="fas fa-envelope me-1"></i>Email</th>
+                  <th><i class="fas fa-tag me-1"></i>Sujet</th>
+                  <th><i class="fas fa-clock me-1"></i>Date</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if ($messages_list && $messages_list->num_rows > 0): ?>
+                  <?php while ($row = $messages_list->fetch_assoc()): ?>
+                  <tr class="<?php echo (int)$row['lu'] === 0 ? 'fw-semibold' : 'text-muted'; ?>">
+                    <td><?php echo (int)$row['id']; ?></td>
+                    <td><?php echo htmlspecialchars($row['nom']); ?></td>
+                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                    <td><?php echo htmlspecialchars($row['sujet']); ?></td>
+                    <td><?php echo htmlspecialchars($row['date_envoi']); ?></td>
+                    <td>
+                      <?php if ((int)$row['lu'] === 0): ?>
+                        <span class="badge bg-warning text-dark"><i class="fas fa-envelope me-1"></i>Non lu</span>
+                      <?php else: ?>
+                        <span class="badge bg-secondary"><i class="fas fa-envelope-open me-1"></i>Lu</span>
+                      <?php endif; ?>
+                    </td>
+                    <td class="d-flex gap-1 flex-wrap">
+                      <button class="btn btn-sm btn-outline-secondary msg-view-btn"
+                              data-id="<?php echo (int)$row['id']; ?>"
+                              data-nom="<?php echo htmlspecialchars($row['nom'], ENT_QUOTES, 'UTF-8'); ?>"
+                              data-email="<?php echo htmlspecialchars($row['email'], ENT_QUOTES, 'UTF-8'); ?>"
+                              data-sujet="<?php echo htmlspecialchars($row['sujet'], ENT_QUOTES, 'UTF-8'); ?>"
+                              data-message="<?php echo htmlspecialchars($row['message'], ENT_QUOTES, 'UTF-8'); ?>"
+                              data-date="<?php echo htmlspecialchars($row['date_envoi'], ENT_QUOTES, 'UTF-8'); ?>"
+                              title="Voir le message">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <?php if ((int)$row['lu'] === 0): ?>
+                      <a href="?mark_read=<?php echo (int)$row['id']; ?>&tab=messages"
+                         class="btn btn-sm btn-success"
+                         title="Marquer comme lu">
+                        <i class="fas fa-check"></i>
+                      </a>
+                      <?php endif; ?>
+                      <a href="?del_msg=<?php echo (int)$row['id']; ?>&tab=messages"
+                         class="btn btn-sm btn-danger"
+                         onclick="return confirm('Supprimer ce message ?')"
+                         title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                      </a>
+                    </td>
+                  </tr>
+                  <?php endwhile; ?>
+                <?php else: ?>
+                  <tr><td colspan="7" class="text-center text-muted py-4">Aucun message reçu.</td></tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Detail Modal -->
+      <div class="modal fade" id="msgDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header" style="background:var(--brand);color:#fff;">
+              <h5 class="modal-title"><i class="fas fa-envelope-open me-2"></i>Détail du message</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <dl class="row mb-0">
+                <dt class="col-sm-2"><i class="fas fa-user me-1"></i>Nom</dt>
+                <dd class="col-sm-10" id="msg_nom"></dd>
+                <dt class="col-sm-2"><i class="fas fa-envelope me-1"></i>Email</dt>
+                <dd class="col-sm-10"><a id="msg_email_link" href="#"></a></dd>
+                <dt class="col-sm-2"><i class="fas fa-tag me-1"></i>Sujet</dt>
+                <dd class="col-sm-10" id="msg_sujet"></dd>
+                <dt class="col-sm-2"><i class="fas fa-clock me-1"></i>Date</dt>
+                <dd class="col-sm-10" id="msg_date"></dd>
+                <dt class="col-sm-2"><i class="fas fa-comment-dots me-1"></i>Message</dt>
+                <dd class="col-sm-10" id="msg_body" style="white-space:pre-wrap;"></dd>
+              </dl>
+            </div>
+            <div class="modal-footer">
+              <a id="msg_mark_read_btn" href="#" class="btn btn-success">
+                <i class="fas fa-check me-1"></i>Marquer comme lu
+              </a>
+              <a id="msg_delete_btn" href="#" class="btn btn-danger"
+                 onclick="return confirm('Supprimer ce message ?')">
+                <i class="fas fa-trash me-1"></i>Supprimer
+              </a>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <?php endif; /* end messages */ ?>
+
     </main><!-- /main -->
   </div><!-- /row -->
 </div><!-- /container-fluid -->
@@ -609,6 +767,34 @@ function openEditTarif(id, pack, description, prix) {
   var modal = new bootstrap.Modal(document.getElementById('editTarifModal'));
   modal.show();
 }
+
+function openMsgDetail(id, nom, email, sujet, body, date) {
+  document.getElementById('msg_nom').textContent = nom;
+  document.getElementById('msg_email_link').textContent = email;
+  document.getElementById('msg_email_link').href = 'mailto:' + email;
+  document.getElementById('msg_sujet').textContent = sujet;
+  document.getElementById('msg_date').textContent = date;
+  document.getElementById('msg_body').textContent = body;
+  document.getElementById('msg_mark_read_btn').href = '?mark_read=' + id + '&tab=messages';
+  document.getElementById('msg_delete_btn').href = '?del_msg=' + id + '&tab=messages';
+  var modal = new bootstrap.Modal(document.getElementById('msgDetailModal'));
+  modal.show();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.msg-view-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      openMsgDetail(
+        btn.dataset.id,
+        btn.dataset.nom,
+        btn.dataset.email,
+        btn.dataset.sujet,
+        btn.dataset.message,
+        btn.dataset.date
+      );
+    });
+  });
+});
 </script>
 </body>
 </html>

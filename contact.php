@@ -13,6 +13,7 @@
     .btn-brand { background: var(--brand); color: #fff; border: none; }
     .btn-brand:hover { background: var(--brand-dark); color: #fff; }
     .info-icon { color: var(--brand); font-size: 1.2rem; }
+    .input-icon { background: var(--brand); color: #fff; border-color: var(--brand); }
   </style>
 </head>
 <body>
@@ -42,20 +43,40 @@
         <form action="contact_form_handler.php" method="post">
           <div class="mb-3">
             <label class="form-label fw-semibold">Votre nom</label>
-            <input type="text" name="nom" class="form-control" placeholder="Prenom Nom" required>
+            <div class="input-group">
+              <span class="input-group-text input-icon">
+                <i class="fas fa-user"></i>
+              </span>
+              <input type="text" name="nom" class="form-control" placeholder="Prenom Nom" maxlength="100" required>
+            </div>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Votre email</label>
-            <input type="email" name="email" class="form-control" placeholder="exemple@email.com" required>
+            <div class="input-group">
+              <span class="input-group-text input-icon">
+                <i class="fas fa-envelope"></i>
+              </span>
+              <input type="email" name="email" class="form-control" placeholder="exemple@email.com" maxlength="150" required>
+            </div>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Sujet</label>
-            <input type="text" name="sujet" class="form-control" placeholder="Sujet de votre message" required>
+            <div class="input-group">
+              <span class="input-group-text input-icon">
+                <i class="fas fa-tag"></i>
+              </span>
+              <input type="text" name="sujet" class="form-control" placeholder="Sujet de votre message" maxlength="200" required>
+            </div>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Message</label>
-            <textarea name="message" class="form-control" rows="5"
-                      placeholder="Votre message..." required></textarea>
+            <div class="input-group">
+              <span class="input-group-text input-icon">
+                <i class="fas fa-comment-dots"></i>
+              </span>
+              <textarea name="message" class="form-control" rows="5"
+                        placeholder="Votre message..." maxlength="5000" required></textarea>
+            </div>
           </div>
           <button type="submit" class="btn btn-brand w-100">
             <i class="fas fa-paper-plane me-1"></i>Envoyer
