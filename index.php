@@ -31,10 +31,7 @@
 
         <!-- BOUTONS -->
         <a href="reserver.php">Réserver</a>
-        <a href="galerie.php">Galerie</a>
-        <a href="tarifs.php">Tarifs</a>
-        <a href="contact.php">Contact</a>
-        <a href="avis.php">Avis Clients</a>
+        
     </div>
     <div class="photo">
         <img src="images/photographe.jpg" alt="Photographe">
