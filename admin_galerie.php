@@ -1,62 +1,65 @@
 <?php
 session_start();
-$ADMIN_PASSWORD = "Ndiougahmad16";
 
-if(isset($_POST['password'])){
-    if($_POST['password'] === $ADMIN_PASSWORD){
-        $_SESSION['admin_logged'] = true;
-    } else {
-        $error = "Mot de passe incorrect";
-    }
+// Auth guard - use admin_dashboard.php instead
+if (!isset($_SESSION['admin']) || $_SESSION['admin'] !== true) {
+    header("Location: login.php");
+    exit();
 }
 
-if(!isset($_SESSION['admin_logged'])){
-?>
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head><meta charset="UTF-8"><title>Connexion Admin Galerie</title></head>
-    <body>
-        <h2>Connexion Admin Galerie</h2>
-        <?php if(isset($error)) echo "<p style='color:red;'>$error</p>"; ?>
-        <form method="post">
-            <input type="password" name="password" placeholder="Mot de passe" required>
-            <button type="submit">Se connecter</button>
-        </form>
-    </body>
-    </html>
-<?php
-    exit;
+// CSRF token
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+$csrf_token = $_SESSION['csrf_token'];
 
 $conn = new mysqli("localhost", "root", "", "photographe_db");
-if($conn->connect_error){
-    die("Erreur de connexion: " . $conn->connect_error);
+if ($conn->connect_error) {
+    die("Erreur de connexion: " . htmlspecialchars($conn->connect_error));
 }
 
-// Ajouter photo
-if(isset($_FILES['image'])){
-    $file_name = basename($_FILES['image']['name']);
-    $target_file = "uploads/" . $file_name;
+$success = '';
+$error   = '';
 
-    if(move_uploaded_file($_FILES['image']['tmp_name'], $target_file)){
-        $stmt = $conn->prepare("INSERT INTO galerie (images) VALUES (?)");
-        $stmt->bind_param("s", $file_name);
-        $stmt->execute();
-        $stmt->close();
-        $success = "Photo ajoutée avec succès!";
+// Ajouter photo
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("Token CSRF invalide.");
+    }
+    if ($_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $_FILES['image']['tmp_name']);
+        finfo_close($finfo);
+        if (in_array($mime, $allowed_types)) {
+            $ext       = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $file_name = uniqid('photo_', true) . '.' . strtolower($ext);
+            $target    = "uploads/" . $file_name;
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+                $stmt = $conn->prepare("INSERT INTO galerie (images) VALUES (?)");
+                $stmt->bind_param("s", $file_name);
+                $stmt->execute();
+                $stmt->close();
+                $success = "Photo ajoutée avec succès!";
+            } else {
+                $error = "Erreur lors de l'upload.";
+            }
+        } else {
+            $error = "Format de fichier non autorisé (JPEG, PNG, GIF, WEBP uniquement).";
+        }
     } else {
-        $error = "Erreur lors de l'ajout de la photo.";
+        $error = "Erreur lors de l'upload du fichier.";
     }
 }
 
 // Supprimer photo
-if(isset($_GET['delete'])){
-    $id = intval($_GET['delete']);
+if (isset($_GET['delete'])) {
+    $id  = intval($_GET['delete']);
     $res = $conn->query("SELECT images FROM galerie WHERE id=$id");
-    if($res && $res->num_rows > 0){
-        $row = $res->fetch_assoc();
+    if ($res && $res->num_rows > 0) {
+        $row  = $res->fetch_assoc();
         $file = "uploads/" . $row['images'];
-        if(file_exists($file)) unlink($file);
+        if (file_exists($file)) unlink($file);
         $conn->query("DELETE FROM galerie WHERE id=$id");
         $success = "Photo supprimée avec succès!";
     }
@@ -64,59 +67,103 @@ if(isset($_GET['delete'])){
 
 $result = $conn->query("SELECT * FROM galerie ORDER BY id DESC");
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Admin Galerie</title>
-<style>
-body{ font-family:Arial; background:#f5f5f5; padding:20px; }
-h2{ text-align:center; }
-form{ text-align:center; margin-bottom:20px; }
-.gallery{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:15px; }
-.gallery img{ width:100%; height:150px; object-fit:cover; border-radius:5px; }
-button.delete{ background:red; color:white; border:none; padding:5px; cursor:pointer; margin-top:5px; border-radius:3px; }
-.message{ text-align:center; color:green; }
-.error{ text-align:center; color:red; }
-</style>
+  <meta charset="UTF-8">
+  <title>Admin Galerie - Sixteen Prod</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root { --brand: #6a0dad; --brand-dark: #4b0082; }
+    body { background: #f8f4ff; }
+    .btn-brand { background: var(--brand); color: #fff; border: none; }
+    .btn-brand:hover { background: var(--brand-dark); color: #fff; }
+  </style>
 </head>
 <body>
 
-<h2>Admin Galerie</h2>
+<nav class="navbar navbar-dark py-2 mb-4" style="background:var(--brand-dark);">
+  <div class="container-fluid">
+    <span class="navbar-brand fw-bold"><i class="fas fa-images me-2"></i>Admin Galerie</span>
+    <div class="d-flex gap-2">
+      <a href="admin_dashboard.php?tab=galerie" class="btn btn-sm btn-outline-light">
+        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+      </a>
+      <a href="logout.php" class="btn btn-sm btn-light" style="color:var(--brand);">
+        <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+      </a>
+    </div>
+  </div>
+</nav>
 
-<?php if(isset($success)) echo "<p class='message'>$success</p>"; ?>
-<?php if(isset($error)) echo "<p class='error'>$error</p>"; ?>
+<div class="container pb-5">
+  <h4 class="fw-bold mb-4" style="color:var(--brand);"><i class="fas fa-images me-2"></i>Gestion de la Galerie</h4>
 
-<!-- Formulaire upload -->
-<form method="post" enctype="multipart/form-data">
-    <input type="file" name="image" accept="image/*" required>
-    <button type="submit">Ajouter Photo</button>
-</form>
+  <?php if ($success): ?>
+    <div class="alert alert-success"><i class="fas fa-check-circle me-1"></i><?php echo htmlspecialchars($success); ?></div>
+  <?php endif; ?>
+  <?php if ($error): ?>
+    <div class="alert alert-danger"><i class="fas fa-exclamation-circle me-1"></i><?php echo htmlspecialchars($error); ?></div>
+  <?php endif; ?>
 
-<!-- Galerie admin avec option supprimer -->
-<div class="gallery">
-<?php
-if($result && $result->num_rows > 0){
-    while($row = $result->fetch_assoc()){
-        $file = "uploads/" . $row['images'];
-        if(file_exists($file)){
-?>
-        <div>
-            <img src="<?= $file ?>">
-            <form method="get" style="text-align:center;">
-                <input type="hidden" name="delete" value="<?= $row['id'] ?>">
-                <button type="submit" class="delete" onclick="return confirm('Supprimer cette photo ?')">Supprimer</button>
-            </form>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header fw-bold" style="background:var(--brand);color:#fff;">
+      <i class="fas fa-upload me-1"></i>Ajouter une photo
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-8">
+            <input type="file" name="image" class="form-control"
+                   accept="image/jpeg,image/png,image/gif,image/webp" required>
+            <small class="text-muted">Formats acceptés : JPEG, PNG, GIF, WEBP</small>
+          </div>
+          <div class="col-md-4">
+            <button type="submit" class="btn btn-brand w-100">
+              <i class="fas fa-upload me-1"></i>Ajouter la photo
+            </button>
+          </div>
         </div>
-<?php
-        }
-    }
-} else {
-    echo "<p style='text-align:center;'>Aucune photo pour le moment.</p>";
-}
-?>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <?php
+    if ($result && $result->num_rows > 0):
+        while ($row = $result->fetch_assoc()):
+            $file = "uploads/" . trim($row['images']);
+            if (file_exists($file)):
+    ?>
+    <div class="col-6 col-md-4 col-lg-3">
+      <div class="card border-0 shadow-sm">
+        <img src="<?php echo htmlspecialchars($file); ?>"
+             class="card-img-top" style="height:150px;object-fit:cover;" alt="Photo">
+        <div class="card-body p-2 text-center">
+          <a href="?delete=<?php echo (int)$row['id']; ?>"
+             class="btn btn-sm btn-danger w-100"
+             onclick="return confirm('Supprimer cette photo ?')">
+            <i class="fas fa-trash me-1"></i>Supprimer
+          </a>
+        </div>
+      </div>
+    </div>
+    <?php
+            endif;
+        endwhile;
+    else:
+    ?>
+    <div class="col-12 text-center text-muted py-5">
+      <i class="fas fa-image fa-3x mb-3 d-block" style="color:var(--brand);"></i>
+      Aucune photo pour le moment.
+    </div>
+    <?php endif; ?>
+  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
