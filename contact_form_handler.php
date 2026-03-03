@@ -1,4 +1,5 @@
 <?php
+require_once 'connexion.php';
 
 // Validate required POST fields
 if (
@@ -11,40 +12,46 @@ if (
     exit();
 }
 
-// Récupérer et valider les données du formulaire
-$nom = htmlspecialchars(trim($_POST['nom']));
-$email = filter_var(trim($_POST['email']), FILTER_VALIDATE_EMAIL);
-$sujet = htmlspecialchars(trim($_POST['sujet']));
-$message_form = htmlspecialchars(trim($_POST['message']));
+// Sanitize and validate inputs
+$nom     = htmlspecialchars(trim($_POST['nom']), ENT_QUOTES, 'UTF-8');
+$email   = filter_var(trim($_POST['email']), FILTER_VALIDATE_EMAIL);
+$sujet   = htmlspecialchars(trim($_POST['sujet']), ENT_QUOTES, 'UTF-8');
+$message = htmlspecialchars(trim($_POST['message']), ENT_QUOTES, 'UTF-8');
 
-if (!$email) {
+if (!$email || !$nom || !$sujet || !$message) {
     header("Location: contact.php?success=0");
     exit();
 }
 
-// Mail du photographe (celui qui reçoit)
-$to = "sixteenprod2001@gmail.com";
-
-// Sujet du mail
-$subject = "Message depuis le formulaire Contact: $sujet";
-
-// Corps du mail
-$message = "Nom : $nom\n";
-$message .= "Email : $email\n";
-$message .= "Sujet : $sujet\n";
-$message .= "Message :\n$message_form";
-
-// Headers pour que le mail soit bien formaté
-$headers = "From: $email\r\n";
-$headers .= "Reply-To: $email\r\n";
-
-// Envoyer le mail
-if(mail($to, $subject, $message, $headers)) {
-    // Redirection vers une page de confirmation ou retour
-    header("Location: contact.php?success=1");
+// Length limits
+if (mb_strlen($nom) > 100 || mb_strlen($sujet) > 200 || mb_strlen($message) > 5000) {
+    header("Location: contact.php?success=0");
     exit();
+}
+
+if (!$conn) {
+    header("Location: contact.php?success=0");
+    exit();
+}
+
+// Insert into messages table using prepared statement
+$stmt = $conn->prepare(
+    "INSERT INTO messages (nom, email, sujet, message, date_envoi, lu) VALUES (?, ?, ?, ?, NOW(), 0)"
+);
+if (!$stmt) {
+    header("Location: contact.php?success=0");
+    exit();
+}
+
+$stmt->bind_param("ssss", $nom, $email, $sujet, $message);
+$ok = $stmt->execute();
+$stmt->close();
+$conn->close();
+
+if ($ok) {
+    header("Location: contact.php?success=1");
 } else {
     header("Location: contact.php?success=0");
-    exit();
 }
+exit();
 ?>

@@ -111,6 +111,24 @@ CREATE TABLE IF NOT EXISTS `tarifs` (
 INSERT INTO `tarifs` (`id`, `pack`, `description`, `prix`) VALUES
 (0, 'Pack photo', '10 photos', 10000),
 (0, 'Pack photo', '5 photos', 5000);
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `messages`
+--
+
+DROP TABLE IF EXISTS `messages`;
+CREATE TABLE IF NOT EXISTS `messages` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nom` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `sujet` varchar(200) NOT NULL,
+  `message` text NOT NULL,
+  `date_envoi` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `lu` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
