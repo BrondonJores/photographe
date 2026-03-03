@@ -1,64 +1,97 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "photographe_db");
-if($conn->connect_error){
-    die("Erreur de connexion: " . $conn->connect_error);
+$conn = null;
+$result = null;
+try {
+    $conn = new mysqli("localhost", "root", "", "photographe_db");
+    if (!$conn->connect_error) {
+        $result = $conn->query("SELECT * FROM galerie ORDER BY id DESC");
+    }
+} catch (Exception $e) {
+    // DB unavailable — page renders with empty gallery
 }
-
-$result = $conn->query("SELECT * FROM galerie ORDER BY id DESC");
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Galerie</title>
-<style>
-body{ font-family:Arial; background:#f5f5f5; margin:0; padding:20px; }
-.gallery{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:15px; }
-.gallery img{ width:100%; height:250px; object-fit:cover; border-radius:10px; cursor:pointer; transition:0.3s; }
-.gallery img:hover{ transform:scale(1.05); }
-.lightbox{ display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); justify-content:center; align-items:center; z-index:1000; }
-.lightbox img{ max-width:90%; max-height:90%; border-radius:10px; }
-.lightbox span{ position:absolute; top:20px; right:40px; font-size:35px; color:white; cursor:pointer; }
-</style>
+  <meta charset="UTF-8">
+  <title>Galerie - Sixteen Prod</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root { --brand: #6a0dad; }
+    .gallery-img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px;
+                   cursor: pointer; transition: transform .25s, box-shadow .25s; }
+    .gallery-img:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(106,13,173,.3); }
+    .section-title { color: var(--brand); }
+  </style>
 </head>
-<body>
+<body class="bg-light">
 
 <?php include 'navbar.php'; ?>
 
-<h2 style="text-align:center;">Galerie</h2>
+<div class="container py-5">
+  <h2 class="text-center fw-bold section-title mb-4">
+    <i class="fas fa-images me-2"></i>Notre Galerie
+  </h2>
 
-<div class="gallery">
-<?php 
-if($result && $result->num_rows > 0){
-    while($row = $result->fetch_assoc()) { 
-        $file = 'uploads/' . $row['images'];
-        if(file_exists($file)){ 
-?>
-            <img src="<?= $file ?>" onclick="openLightbox(this.src)">
-<?php 
-        }
-    } 
-} else {
-    echo "<p style='text-align:center;'>Aucune photo pour le moment.</p>";
-}
-?>
+  <div class="row g-3">
+    <?php
+    if ($result && $result->num_rows > 0):
+        while ($row = $result->fetch_assoc()):
+            $file = 'uploads/' . trim($row['images']);
+            if (file_exists($file)):
+    ?>
+    <div class="col-6 col-md-4 col-lg-3">
+      <img src="<?php echo htmlspecialchars($file); ?>"
+           class="gallery-img"
+           alt="Photo galerie"
+           data-bs-toggle="modal" data-bs-target="#lightboxModal"
+           data-src="<?php echo htmlspecialchars($file); ?>">
+    </div>
+    <?php
+            endif;
+        endwhile;
+    else:
+    ?>
+    <div class="col-12 text-center text-muted py-5">
+      <i class="fas fa-image fa-3x mb-3 d-block" style="color:var(--brand);"></i>
+      Aucune photo pour le moment.
+    </div>
+    <?php endif; ?>
+  </div>
 </div>
 
-<div class="lightbox" id="lightbox">
-    <span onclick="closeLightbox()">&times;</span>
-    <img id="lightbox-img">
+<!-- Lightbox Modal -->
+<div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content bg-dark border-0">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-2">
+        <img id="lightboxImg" src="" alt="Photo agrandie"
+             class="img-fluid rounded" style="max-height:80vh;">
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Footer -->
+<footer class="bg-dark text-white py-3 mt-5">
+  <div class="container text-center">
+    <p class="mb-0 small"><i class="fas fa-camera me-1"></i><strong>Sixteen Prod</strong> &mdash;
+      <a href="index.php" class="text-white">Retour à l'accueil</a></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-function openLightbox(src){
-    document.getElementById("lightbox").style.display="flex";
-    document.getElementById("lightbox-img").src = src;
-}
-function closeLightbox(){
-    document.getElementById("lightbox").style.display="none";
-}
+document.querySelectorAll('.gallery-img').forEach(function(img) {
+  img.addEventListener('click', function() {
+    document.getElementById('lightboxImg').src = this.getAttribute('data-src');
+  });
+});
 </script>
-
 </body>
 </html>
