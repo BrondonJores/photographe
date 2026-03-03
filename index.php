@@ -195,7 +195,11 @@ try {
           endwhile;
       else:
       ?>
-      <div class="col-12 text-center text-muted">Aucun avis pour le moment.</div>
+      <div class="col-12">
+        <div class="card avis-card shadow-sm p-4 text-center text-muted">
+          <i class="fas fa-comment-slash fa-2x mb-2 d-block"></i>Aucun avis pour le moment.
+        </div>
+      </div>
       <?php endif; ?>
     </div>
     <div class="text-center mt-4">

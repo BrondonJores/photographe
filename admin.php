@@ -71,7 +71,7 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
           </button>
         </form>
         <div class="mt-3">
-          <a href="index.php" class="text-muted small"><i class="fas fa-arrow-left me-1"></i>Retour a l'accueil</a>
+          <a href="index.php" class="text-muted small"><i class="fas fa-arrow-left me-1"></i>Retour à l'accueil</a>
         </div>
       </div>
     </div>

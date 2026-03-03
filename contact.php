@@ -28,8 +28,8 @@
   <?php if (isset($_GET['success'])): ?>
     <div class="alert <?php echo $_GET['success'] == '1' ? 'alert-success' : 'alert-danger'; ?> text-center">
       <?php echo $_GET['success'] == '1'
-            ? '<i class="fas fa-check-circle me-1"></i>Votre message a ete envoye avec succes !'
-            : '<i class="fas fa-exclamation-circle me-1"></i>Erreur lors de l\'envoi, veuillez reessayer.'; ?>
+            ? '<i class="fas fa-check-circle me-1"></i>Votre message a été envoyé avec succès !'
+            : '<i class="fas fa-exclamation-circle me-1"></i>Erreur lors de l\'envoi, veuillez réessayer.'; ?>
     </div>
   <?php endif; ?>
 
@@ -106,7 +106,7 @@
 <footer class="bg-dark text-white py-3 mt-5">
   <div class="container text-center">
     <p class="mb-0 small"><i class="fas fa-camera me-1"></i><strong>Sixteen Prod</strong> &mdash;
-      <a href="index.php" class="text-white">Retour a l'accueil</a></p>
+      <a href="index.php" class="text-white">Retour à l'accueil</a></p>
   </div>
 </footer>
 

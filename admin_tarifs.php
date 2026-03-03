@@ -94,7 +94,7 @@ $result = $conn->query("SELECT * FROM tarifs ORDER BY id DESC");
         <i class="fas fa-tachometer-alt me-1"></i>Dashboard
       </a>
       <a href="logout.php" class="btn btn-sm btn-light" style="color:var(--brand);">
-        <i class="fas fa-sign-out-alt me-1"></i>Deconnexion
+        <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
       </a>
     </div>
   </div>
@@ -105,7 +105,7 @@ $result = $conn->query("SELECT * FROM tarifs ORDER BY id DESC");
 
   <?php if (isset($_GET['ok'])): ?>
     <div class="alert alert-success alert-dismissible fade show py-2">
-      <i class="fas fa-check-circle me-1"></i>Operation effectuee.
+      <i class="fas fa-check-circle me-1"></i>Opération effectuée.
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php endif; ?>

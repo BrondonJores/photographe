@@ -245,7 +245,7 @@ $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
 
       <?php if (isset($_GET['ok'])): ?>
         <div class="alert alert-success alert-dismissible fade show py-2" role="alert">
-          <i class="fas fa-check-circle me-1"></i>Operation effectuee avec succes.
+          <i class="fas fa-check-circle me-1"></i>Opération effectuée avec succès.
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
       <?php endif; ?>
@@ -526,7 +526,7 @@ $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
               <div class="col-md-8">
                 <input type="file" name="image" class="form-control"
                        accept="image/jpeg,image/png,image/gif,image/webp" required>
-                <small class="text-muted">Formats acceptes : JPEG, PNG, GIF, WEBP</small>
+                <small class="text-muted">Formats acceptés : JPEG, PNG, GIF, WEBP</small>
               </div>
               <div class="col-md-4">
                 <button type="submit" class="btn btn-brand w-100">
@@ -581,7 +581,7 @@ $active_tab = htmlspecialchars($_GET['tab'] ?? 'stats');
     new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: labels.length ? labels : ['Aucune donnee'],
+        labels: labels.length ? labels : ['Aucune donnée'],
         datasets: [{
           label: 'Reservations',
           data: values.length ? values : [0],

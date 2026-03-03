@@ -40,12 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
                 $stmt->bind_param("s", $file_name);
                 $stmt->execute();
                 $stmt->close();
-                $success = "Photo ajoutee avec succes!";
+                $success = "Photo ajoutée avec succès!";
             } else {
                 $error = "Erreur lors de l'upload.";
             }
         } else {
-            $error = "Format de fichier non autorise (JPEG, PNG, GIF, WEBP uniquement).";
+            $error = "Format de fichier non autorisé (JPEG, PNG, GIF, WEBP uniquement).";
         }
     } else {
         $error = "Erreur lors de l'upload du fichier.";
@@ -61,7 +61,7 @@ if (isset($_GET['delete'])) {
         $file = "uploads/" . $row['images'];
         if (file_exists($file)) unlink($file);
         $conn->query("DELETE FROM galerie WHERE id=$id");
-        $success = "Photo supprimee avec succes!";
+        $success = "Photo supprimée avec succès!";
     }
 }
 
@@ -92,7 +92,7 @@ $result = $conn->query("SELECT * FROM galerie ORDER BY id DESC");
         <i class="fas fa-tachometer-alt me-1"></i>Dashboard
       </a>
       <a href="logout.php" class="btn btn-sm btn-light" style="color:var(--brand);">
-        <i class="fas fa-sign-out-alt me-1"></i>Deconnexion
+        <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
       </a>
     </div>
   </div>
@@ -119,7 +119,7 @@ $result = $conn->query("SELECT * FROM galerie ORDER BY id DESC");
           <div class="col-md-8">
             <input type="file" name="image" class="form-control"
                    accept="image/jpeg,image/png,image/gif,image/webp" required>
-            <small class="text-muted">Formats acceptes : JPEG, PNG, GIF, WEBP</small>
+            <small class="text-muted">Formats acceptés : JPEG, PNG, GIF, WEBP</small>
           </div>
           <div class="col-md-4">
             <button type="submit" class="btn btn-brand w-100">
